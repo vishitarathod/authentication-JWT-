@@ -6,7 +6,7 @@ require('./helpers/init_mongodb')
 const AuthRoute=require('./Routes/Auth.Route');
 const {verifyAccessToken}=require('./helpers/jwt_helper')
 const PORT=process.env.PORT||3000;
-
+require('./helpers/init_redis')
 const app=express();
 
 app.use(morgan('dev'));

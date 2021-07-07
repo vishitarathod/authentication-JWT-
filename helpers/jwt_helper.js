@@ -1,13 +1,16 @@
 const JWT=require('jsonwebtoken');
 const createError=require('http-errors');
+const client = require('./init_redis')
 
 module.exports={
     signAccessToken: (userId)=>{
         return new Promise((resolve,reject)=>{
-            const payload={}
+            const payload={
+                name:'xyz'
+            }
             const secret=process.env.ACCESS_TOKEN_SECRET
             const option={
-                expiresIn:'15s',
+                expiresIn:'1y',
                 issuer:'',
                 audience:userId
             }
@@ -41,7 +44,7 @@ module.exports={
     },
     signRefreshToken: (userId)=>{
         return new Promise((resolve,reject)=>{
-            const payload={}
+            const payload={ name:'xyz'}
             const secret=process.env.REFRESH_TOKEN_SECRET
             const option={
                 expiresIn:'1y',
@@ -53,7 +56,14 @@ module.exports={
                     console.log(err);
                     return reject(createError.InternalServerError())
                 }
-                resolve(token)
+                client.SET(userId, token, 'EX', 365 * 24 * 60 * 60, (err, reply) => {
+                    if (err) {
+                      console.log(err.message)
+                      reject(createError.InternalServerError())
+                      return
+                    }
+                    resolve(token)
+                  })
             })
         })
     },
@@ -62,7 +72,15 @@ module.exports={
             JWT.verify(refreshToken,process.env.REFRESH_TOKEN_SECRET,(err,token)=>{
                 if(err) return reject(createError.Unauthorized())
                 const userId=payload.aud
-                resolve(userId)
+                client.GET(userId, (err, result) => {
+                    if (err) {
+                      console.log(err.message)
+                      reject(createError.InternalServerError())
+                      return
+                    }
+                    if (refreshToken === result) return resolve(userId)
+                    reject(createError.Unauthorized())
+                  })
             })
         })
     }
