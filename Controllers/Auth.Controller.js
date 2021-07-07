@@ -56,7 +56,7 @@ module.exports={
             const {refreshToken}=req.body;
             if(!refreshToken) throw createError.BadRequest()
             const userId=await verifyRefeshToken(refreshToken)
-    
+            
             const accessToken=await signAccessToken(userId);
             const refToken=await signRefreshToken(userId); 
             
